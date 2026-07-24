@@ -13,6 +13,8 @@ async function executeSearch() {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('cards-grid').classList.add('hidden');
     document.getElementById('dev-data').classList.add('hidden');
+    const warningEl = document.getElementById('api-warning');
+    if (warningEl) warningEl.classList.add('hidden');
     document.getElementById('cards-grid').innerHTML = ''; // Clear previous
 
     try {
@@ -29,6 +31,10 @@ async function executeSearch() {
         if (data.error) {
             alert(data.error);
             return;
+        }
+
+        if (data.api_fallback && warningEl) {
+            warningEl.classList.remove('hidden');
         }
 
         // Update global budget and unhide TOPSIS sliders

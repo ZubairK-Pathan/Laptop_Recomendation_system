@@ -197,7 +197,7 @@ def extract_intent(prompt: str) -> dict:
         print(f"Local Ollama extraction failed: {e}. Trying Gemini fallback...")
         if not gemini_client:
             print("Local AI is offline and no GEMINI_API_KEY was found. Using fallback.")
-            return {"budget": 80000, "q_perf": "B", "q_port": "B", "q_batt": "B"}
+            return {"budget": 80000, "q_perf": "B", "q_port": "B", "q_batt": "B", "api_fallback": True}
             
         try:
             full_prompt = f"{system_extraction_prompt}\n\nUser Request: {prompt}"
@@ -220,7 +220,7 @@ def extract_intent(prompt: str) -> dict:
             raw_json = response.text
         except Exception as gemini_e:
             print(f"Gemini API failed: {gemini_e}")
-            return {"budget": 80000, "q_perf": "B", "q_port": "B", "q_batt": "B"}
+            return {"budget": 80000, "q_perf": "B", "q_port": "B", "q_batt": "B", "api_fallback": True}
 
     try:
         cleaned_json = raw_json.replace("```json", "").replace("```", "").strip()
@@ -228,7 +228,7 @@ def extract_intent(prompt: str) -> dict:
         return extracted_data
     except Exception as e:
         print(f"LLM JSON Parsing failed: {str(e)}\nRaw: {raw_json}")
-        return {"budget": 80000, "q_perf": "B", "q_port": "B", "q_batt": "B"}
+        return {"budget": 80000, "q_perf": "B", "q_port": "B", "q_batt": "B", "api_fallback": True}
 
 
 @app.post("/api/recommend")
@@ -321,7 +321,9 @@ async def recommend(request: PromptRequest):
             }
         )
 
-    return {"results": results, "calculations": {"extracted_intent": extracted_data}}
+    api_fallback = extracted_data.get("api_fallback", False)
+
+    return {"results": results, "calculations": {"extracted_intent": extracted_data}, "api_fallback": api_fallback}
 
 
 @app.get("/api/stats")
