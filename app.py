@@ -143,13 +143,22 @@ def get_batch_engineer_reviews(user_prompt, laptops_data):
                 "with a single key 'reviews' containing an array of 1-sentence rationales.\n\n"
                 f"{review_prompt}"
             )
-            response = gemini_client.models.generate_content(
-                model='gemini-3.5-flash',
-                contents=full_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                ),
-            )
+            for attempt in range(3):
+                try:
+                    response = gemini_client.models.generate_content(
+                        model='gemini-3.5-flash',
+                        contents=full_prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                        ),
+                    )
+                    break
+                except Exception as retry_e:
+                    if "503" in str(retry_e) and attempt < 2:
+                        import time
+                        time.sleep(2)
+                    else:
+                        raise retry_e
             content = response.text
         except Exception as gemini_e:
             print(f"Gemini API failed: {gemini_e}")
@@ -191,13 +200,22 @@ def extract_intent(prompt: str) -> dict:
             
         try:
             full_prompt = f"{system_extraction_prompt}\n\nUser Request: {prompt}"
-            response = gemini_client.models.generate_content(
-                model='gemini-3.5-flash',
-                contents=full_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                ),
-            )
+            for attempt in range(3):
+                try:
+                    response = gemini_client.models.generate_content(
+                        model='gemini-3.5-flash',
+                        contents=full_prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                        ),
+                    )
+                    break
+                except Exception as retry_e:
+                    if "503" in str(retry_e) and attempt < 2:
+                        import time
+                        time.sleep(2)
+                    else:
+                        raise retry_e
             raw_json = response.text
         except Exception as gemini_e:
             print(f"Gemini API failed: {gemini_e}")
